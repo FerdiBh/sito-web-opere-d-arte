@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "home": "Home",
+    "gallery": "Gallery",
+    "shop": "Shop",
+    "cart": "Cart"
+  },
+  "hero": {
+    "title": "Broken Beauty",
+    "subtitle": "Unique artworks crafted from shattered spirits bottles, preserved in resin",
+    "cta": "Explore Gallery",
+    "shop_cta": "Shop Now"
+  },
+  "gallery": {
+    "title": "The Collection",
+    "subtitle": "Each piece is a unique composition of broken bottle glass, frozen in time with crystal-clear resin",
+    "view_details": "View Details",
+    "add_to_cart": "Add to Cart",
+    "price": "Price"
+  },
+  "shop": {
+    "title": "Acquire a Masterpiece",
+    "subtitle": "Own a one-of-a-kind artwork for your collection",
+    "added": "Added to cart!",
+    "buy": "Buy Now"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is empty",
+    "empty_msg": "Browse the gallery to add unique artworks to your collection",
+    "total": "Total",
+    "checkout": "Proceed to Checkout",
+    "remove": "Remove",
+    "order_placed": "Order placed successfully!",
+    "simulated": "This is a simulated purchase for portfolio demonstration."
+  },
+  "footer": {
+    "tagline": "Where broken glass becomes timeless art",
+    "rights": "All rights reserved"
+  }
+}
