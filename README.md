@@ -69,10 +69,6 @@ npm run dev
 | GET | `/api/orders` | Lista ordini |
 | PATCH | `/api/orders/:id/status` | Aggiorna stato ordine |
 
-## Aggiungere le immagini
-
-Le opere vengono referenziate nel seed data (`backend/seed.py`) con percorsi come `/images/nome-file.jpeg`. Inserisci i file immagine reali in `frontend/public/images/`.
-
 ## Lingue
 
 L'interfaccia supporta **Italiano** e **Inglese**. Il toggle nella navbar commuta all'istante tutte le etichette grazie al `LanguageContext` con traduzioni definite in `frontend/src/i18n/`.
