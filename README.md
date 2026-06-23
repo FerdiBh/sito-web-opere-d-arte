@@ -11,74 +11,84 @@ Portfolio e-commerce per una collezione di opere d'arte uniche: bottiglie di liq
 | Database | MongoDB (produzione) / In-memory (preview) |
 | Container | Docker & docker-compose |
 
-## Struttura del progetto
+## Architettura
 
 ```
 sito-web-opere-d-arte/
 ├── backend/
-│   ├── preview_app.py      # Server di preview con dati in memoria
-│   ├── app.py               # Entry point produzione (MongoDB)
-│   ├── models.py            # Modelli MongoDB
-│   ├── routes.py            # Endpoint REST produzione
-│   ├── seed.py              # Popola il database
+│   ├── preview_app.py      # Server preview — dati in memoria, nessun DB richiesto
+│   ├── app.py               # Entry point produzione con MongoDB
+│   ├── models.py            # Modelli MongoDB (Artwork, Order, User)
+│   ├── routes.py            # Endpoint REST per produzione
+│   ├── seed.py              # Popola MongoDB con dati iniziali
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Navbar.jsx     # Navbar con link Login dinamico
-│   │   │   ├── Hero.jsx       # Sezione hero
-│   │   │   ├── Gallery.jsx    # Portfolio puro (no acquisti)
-│   │   │   ├── Shop.jsx       # Negozio con pulsante Buy Now
-│   │   │   ├── Cart.jsx       # Carrello con checkout e spedizione
-│   │   │   ├── UserPanel.jsx  # Login, registrazione, ordini
-│   │   │   ├── AdminPanel.jsx # Pannello admin (CRUD opere)
+│   │   │   ├── Navbar.jsx       # Navigazione fissa con link Login dinamico
+│   │   │   ├── Hero.jsx         # Sezione hero con CTA
+│   │   │   ├── Gallery.jsx      # Portfolio puro — solo anteprime e stato venduto
+│   │   │   ├── Shop.jsx         # Vetrina acquisti con pulsante Buy Now
+│   │   │   ├── Cart.jsx         # Carrello con modulo spedizione e riepilogo ordine
+│   │   │   ├── UserPanel.jsx    # Login, registrazione, cronologia ordini
+│   │   │   ├── AdminPanel.jsx   # CRUD opere (solo admin)
 │   │   │   ├── Footer.jsx
 │   │   │   └── LanguageSwitcher.jsx
 │   │   ├── contexts/
-│   │   │   └── LanguageContext.jsx  # Toggle EN/IT
+│   │   │   └── LanguageContext.jsx  # Gestione stato lingua (IT/EN)
 │   │   └── i18n/
 │   │       ├── en.json
 │   │       └── it.json
-│   ├── public/images/       # Immagini delle opere
+│   ├── public/images/       # Immagini delle opere (collegate dal seed data)
 │   └── Dockerfile
-└── docker-compose.yml
+├── docker-compose.yml
+└── README.md
 ```
 
-## Come eseguire
+## Componenti del frontend
 
-### Preview locale (consigliata per sviluppo)
+### App.jsx (root)
+- Gestisce lo stato globale: carrello, utente loggato, navigazione tra sezioni
+- Persiste l'utente in `localStorage` per sessioni successive
+- Passa `user` a Navbar, Cart e UserPanel per auto-compilazione dati
 
-**Backend (API + frontend servito insieme):**
-```bash
-cd backend
-pip install -r requirements.txt
-python preview_app.py
-```
-Apri `http://localhost:5000` nel browser. Il backend serve sia l'API che i file statici del frontend.
+### Gallery
+- Sezione portfolio: mostra tutte le opere in una griglia responsive
+- Nessun pulsante d'acquisto — solo anteprime visive
+- Overlay "Sold" per opere non più disponibili
 
-### Preview separata (solo backend API + frontend dev)
+### Shop
+- Elenco opere acquistabili con prezzo (100€), descrizione e categoria
+- Pulsante "Buy Now" per aggiungere al carrello
+- Le opere già nel carrello vengono evidenziate
 
-Avvia backend:
-```bash
-cd backend
-pip install -r requirements.txt
-python preview_app.py
-```
+### Cart
+- Riepilogo articoli, costi di spedizione e totale
+- **Spedizione**: Standard 6,90€ (5-7 giorni lavorativi) / Express 12,90€ (2-3 giorni)
+- Modulo con auto-compilazione dai dati utente loggato
+- Etichette localizzate: "Nome e Cognome", "Indirizzo e Numero Civico"
+- Tempi di consegna in "giorni lavorativi" in italiano, "business days" in inglese
 
-In un altro terminale, avvia frontend con hot-reload:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Frontend su `http://localhost:5173`, backend su `http://localhost:5000`.
+### UserPanel
+- Schermata di login/registrazione
+- Registrazione: nome, cognome, indirizzo, username, password
+- Dashboard personale con cronologia ordini
+- Accesso admin tramite credenziali dedicate
 
-### Docker (produzione)
+### AdminPanel
+- CRUD completo sulle opere
+- Aggiunta con titolo e descrizione bilingue (IT/EN)
+- Rimozione con conferma
+- Accesso riservato con autenticazione separata
 
-```bash
-docker-compose up --build
-```
-Frontend su `http://localhost`, backend API su `http://localhost:5000`.
+## Backend (preview_app.py)
+
+Server Flask in-memory con tutti i dati necessari per lo sviluppo:
+- **6 opere** precaricate con dati bilingue, tutte a 100€
+- Gestione utenti: registrazione, login, profilo
+- Gestione ordini: creazione, lettura, associazione utente
+- Amministrazione: login admin, CRUD opere
+- Il frontend buildato viene servito come static files dallo stesso server
 
 ## API Endpoint
 
@@ -92,49 +102,55 @@ Frontend su `http://localhost`, backend API su `http://localhost:5000`.
 | GET | `/api/orders/user/:user_id` | Ordini di un utente |
 | PATCH | `/api/orders/:id/status` | Aggiorna stato ordine |
 | POST | `/api/users/register` | Registrazione utente |
-| POST | `/api/users/login` | Login utente |
+| POST | `/api/users/login` | Login utente, restituisce profilo (senza password) |
 | POST | `/api/admin/login` | Login admin |
 | POST | `/api/admin/artworks` | Aggiungi opera (admin) |
 | DELETE | `/api/admin/artworks/:id` | Rimuovi opera (admin) |
 
-## Funzionalità
+## Dati
 
-### Galleria
-- Portfolio visivo senza pulsanti di acquisto
-- Overlay "Sold" sulle opere vendute
-- Placeholder gradient per immagini mancanti
+### Opera
+```
+{
+  id: string,
+  title: { en: string, it: string },
+  description: { en: string, it: string },
+  price: number (100),
+  image: string (percorso relativo),
+  category: string,
+  available: boolean
+}
+```
 
-### Negozio
-- Elenco opere disponibili con prezzo fisso (100€)
-- Pulsante "Buy Now" per aggiungere al carrello
-- Opere già nel carrello evidenziate
+### Utente
+```
+{
+  id: string,
+  username: string,
+  password: string (solo in memoria, mai esposta),
+  name: string,
+  surname: string,
+  address: string
+}
+```
 
-### Carrello e Checkout
-- Riepilogo articoli prima dell'acquisto
-- Spedizione Standard (6,90€) o Express (12,90€)
-- Tempi di consegna in giorni lavorativi (localizzati)
-- Modulo di spedizione con auto-compilazione dai dati utente loggato
-- Prezzi con simbolo € dopo il numero (es. 100€)
+### Ordine
+```
+{
+  id: string,
+  status: string,
+  items: [{ artwork_id, title, price }],
+  total: number,
+  shipping: { name, surname, address, city, postal, country, shipping, notes },
+  user_id: string | null,
+  language: string
+}
+```
 
-### Account Utente
-- Registrazione con nome, cognome, indirizzo, username, password
-- Login persistente (localStorage)
-- Dashboard con cronologia ordini
-- I dati utente vengono auto-inseriti nel form di checkout
+## Localizzazione
 
-### Pannello Admin
-- Accesso con credenziali `admin` / `password` dalla schermata di login
-- Aggiunta nuove opere con titolo (EN/IT), descrizione (EN/IT), prezzo, immagine, categoria
-- Rimozione opere esistenti
-- Le modifiche si riflettono subito in galleria e negozio
+L'intero sito supporta Italiano e Inglese. Il toggle nella navbar commuta istantaneamente tutte le etichette. Le traduzioni sono definite in file JSON separati (`en.json`, `it.json`) e caricate tramite `LanguageContext`. La preferenza lingua è persistente.
 
-### Lingue
-- Toggle Italiano / Inglese nella navbar
-- Traduzioni complete per tutte le sezioni
-- Persiste la preferenza di lingua
+## Immagini
 
-## Aggiungere le immagini
-
-Le opere vengono referenziate con percorsi come `/images/nome-file.jpeg`. Inserisci i file immagine reali in `frontend/public/images/`.
-
-Nella preview con `preview_app.py`, le immagini vengono servite dalla cartella `frontend/dist/images/`. Dopo aver aggiunto le immagini, esegui `npm run build` nella cartella `frontend/` per copiarle nel `dist`.
+Le opere referenziano immagini con percorsi come `/images/nome-file.jpeg`. I file vanno inseriti in `frontend/public/images/`. Per la preview, dopo aver aggiunto le immagini, esegui `npm run build` in `frontend/` per copiarle nella cartella `dist/`.
